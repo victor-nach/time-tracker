@@ -1,0 +1,65 @@
+type Query {
+  me: User!
+  session(id: String!): Session!
+  sessions(filter: filterType): [Session]!
+}
+
+type Mutation {
+  signUp: AuthResponse!
+  login: AuthResponse!
+  refreshToken: AuthResponse!
+
+  saveSession(input: SessionInput): Response!
+  updateSessionInfo(id: String!, input: updateSessionInput): Response!
+  deleteSession(id: String!): Response!
+}
+
+enum filterType {
+  day
+  week
+  month
+}
+
+input SessionInput {
+  title: String
+  description: String
+  start: Int!
+  end: Int!
+}
+
+input updateSessionInput {
+  title: String
+  description: String
+}
+
+type AuthResponse {
+  success: Boolean
+  message: String
+  jwtToken: String!
+  refreshToken: String!
+  User: User!
+}
+
+type Response {
+  success: Boolean
+  message: String
+  token: String
+}
+
+type Session {
+  id : String
+  owner: String
+  title: String
+  description: String
+  start: Int
+  end: Int
+  Ts: Int
+}
+
+type User {
+  id : String
+  name : String
+  email: String
+  password: String
+  Ts: Int
+}
