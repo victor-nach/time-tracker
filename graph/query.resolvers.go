@@ -5,22 +5,68 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/victor-nach/time-tracker/lib/rerrors"
+	"go.uber.org/zap"
 
 	"github.com/victor-nach/time-tracker/graph/generated"
 	types "github.com/victor-nach/time-tracker/graph/model"
 )
 
 func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	claims, err := r.getClaimsFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := r.store.GetUser(claims.UserId)
+	if err != nil {
+		err := rerrors.Format(rerrors.InvalidAuthErr, err)
+		r.logger.Error("sign up", zap.Error(err))
+		return nil, err
+	}
+	
+	resp := mapUser(user)
+
+	return resp, nil
 }
 
 func (r *queryResolver) Session(ctx context.Context, id string) (*types.Session, error) {
-	panic(fmt.Errorf("not implemented"))
+	claims, err := r.getClaimsFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := r.store.GetSession(id, claims.UserId)
+	if err != nil {
+		err = rerrors.Format(rerrors.SessionNotFoundErr, err)
+		r.logger.Error("delete session", zap.Error(err))
+		return nil, err
+	}
+
+	resp := mapSession(session)
+
+	return resp, nil
 }
 
 func (r *queryResolver) Sessions(ctx context.Context, filter *types.FilterType) ([]*types.Session, error) {
-	panic(fmt.Errorf("not implemented"))
+	claims, err := r.getClaimsFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sessions, err := r.store.GetSessions(claims.UserId, filter.String())
+	if err != nil {
+		err = rerrors.Format(rerrors.DatabaseErr, err)
+		r.logger.Error("delete session", zap.Error(err))
+		return nil, err
+	}
+
+	sessionsResp := make([]*types.Session, len(sessions))
+	for i, s := range sessions {
+		sessionsResp[i] = mapSession(s)
+	}
+
+	return sessionsResp, nil
 }
 
 // Query returns generated.QueryResolver implementation.

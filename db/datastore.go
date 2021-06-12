@@ -9,17 +9,9 @@ type Datastore interface {
 	GetUserByEmail(email string) (*models.User, error)
 
 	GetSession(id, owner string) (*models.Session, error)
-	GetSessions(owner string, filter sessionFilter) ([]*models.Session, error)
+	GetSessions(owner string, filter string) ([]*models.Session, error)
 
 	CreateSession(session *models.Session) (*models.Session, error)
 	UpdateSession(id string, info models.SessionInfo) error
 	DeleteSession(id string) error
 }
-
-type sessionFilter string
-
-const (
-	Day   sessionFilter = "day"
-	Week  sessionFilter = "week"
-	Month sessionFilter = "month"
-)
