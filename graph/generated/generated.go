@@ -14,7 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/victor-nach/time-tracker/graph/models"
+	"github.com/victor-nach/time-tracker/graph/model"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -53,17 +53,17 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		DeleteSession     func(childComplexity int, id string) int
-		Login             func(childComplexity int) int
+		Login             func(childComplexity int, email string, passcode string) int
 		RefreshToken      func(childComplexity int) int
-		SaveSession       func(childComplexity int, input *models.SessionInput) int
-		SignUp            func(childComplexity int) int
-		UpdateSessionInfo func(childComplexity int, id string, input *models.UpdateSessionInput) int
+		SaveSession       func(childComplexity int, input *model.SessionInput) int
+		SignUp            func(childComplexity int, email string, passcode string, name string) int
+		UpdateSessionInfo func(childComplexity int, id string, input *model.UpdateSessionInput) int
 	}
 
 	Query struct {
 		Me       func(childComplexity int) int
 		Session  func(childComplexity int, id string) int
-		Sessions func(childComplexity int, filter *models.FilterType) int
+		Sessions func(childComplexity int, filter *model.FilterType) int
 	}
 
 	Response struct {
@@ -83,26 +83,25 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Email    func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Name     func(childComplexity int) int
-		Password func(childComplexity int) int
-		Ts       func(childComplexity int) int
+		Email func(childComplexity int) int
+		ID    func(childComplexity int) int
+		Name  func(childComplexity int) int
+		Ts    func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	SignUp(ctx context.Context) (*models.AuthResponse, error)
-	Login(ctx context.Context) (*models.AuthResponse, error)
-	RefreshToken(ctx context.Context) (*models.AuthResponse, error)
-	SaveSession(ctx context.Context, input *models.SessionInput) (*models.Response, error)
-	UpdateSessionInfo(ctx context.Context, id string, input *models.UpdateSessionInput) (*models.Response, error)
-	DeleteSession(ctx context.Context, id string) (*models.Response, error)
+	SignUp(ctx context.Context, email string, passcode string, name string) (*model.AuthResponse, error)
+	Login(ctx context.Context, email string, passcode string) (*model.AuthResponse, error)
+	RefreshToken(ctx context.Context) (*model.AuthResponse, error)
+	SaveSession(ctx context.Context, input *model.SessionInput) (*model.Response, error)
+	UpdateSessionInfo(ctx context.Context, id string, input *model.UpdateSessionInput) (*model.Response, error)
+	DeleteSession(ctx context.Context, id string) (*model.Response, error)
 }
 type QueryResolver interface {
-	Me(ctx context.Context) (*models.User, error)
-	Session(ctx context.Context, id string) (*models.Session, error)
-	Sessions(ctx context.Context, filter *models.FilterType) ([]*models.Session, error)
+	Me(ctx context.Context) (*model.User, error)
+	Session(ctx context.Context, id string) (*model.Session, error)
+	Sessions(ctx context.Context, filter *model.FilterType) ([]*model.Session, error)
 }
 
 type executableSchema struct {
@@ -172,7 +171,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Mutation.Login(childComplexity), true
+		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["passcode"].(string)), true
 
 	case "Mutation.refreshToken":
 		if e.complexity.Mutation.RefreshToken == nil {
@@ -191,14 +195,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SaveSession(childComplexity, args["input"].(*models.SessionInput)), true
+		return e.complexity.Mutation.SaveSession(childComplexity, args["input"].(*model.SessionInput)), true
 
 	case "Mutation.signUp":
 		if e.complexity.Mutation.SignUp == nil {
 			break
 		}
 
-		return e.complexity.Mutation.SignUp(childComplexity), true
+		args, err := ec.field_Mutation_signUp_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SignUp(childComplexity, args["email"].(string), args["passcode"].(string), args["name"].(string)), true
 
 	case "Mutation.updateSessionInfo":
 		if e.complexity.Mutation.UpdateSessionInfo == nil {
@@ -210,7 +219,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSessionInfo(childComplexity, args["id"].(string), args["input"].(*models.UpdateSessionInput)), true
+		return e.complexity.Mutation.UpdateSessionInfo(childComplexity, args["id"].(string), args["input"].(*model.UpdateSessionInput)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -241,7 +250,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Sessions(childComplexity, args["filter"].(*models.FilterType)), true
+		return e.complexity.Query.Sessions(childComplexity, args["filter"].(*model.FilterType)), true
 
 	case "Response.message":
 		if e.complexity.Response.Message == nil {
@@ -334,13 +343,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Name(childComplexity), true
 
-	case "User.password":
-		if e.complexity.User.Password == nil {
-			break
-		}
-
-		return e.complexity.User.Password(childComplexity), true
-
 	case "User.Ts":
 		if e.complexity.User.Ts == nil {
 			break
@@ -412,15 +414,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `type Query {
-  me: User!
-  session(id: String!): Session!
-  sessions(filter: filterType): [Session]!
-}
-
-type Mutation {
-  signUp: AuthResponse!
-  login: AuthResponse!
+	{Name: "graph/schemas/mutation.graphqls", Input: `type Mutation {
+  signUp(email: String!, passcode: String!, name: String!): AuthResponse!
+  login(email: String!, passcode: String!): AuthResponse!
   refreshToken: AuthResponse!
 
   saveSession(input: SessionInput): Response!
@@ -447,35 +443,39 @@ input updateSessionInput {
 }
 
 type AuthResponse {
-  success: Boolean
-  message: String
+  success: Boolean!
+  message: String!
   jwtToken: String!
   refreshToken: String!
   User: User!
+}`, BuiltIn: false},
+	{Name: "graph/schemas/query.graphqls", Input: `type Query {
+  me: User!
+  session(id: String!): Session!
+  sessions(filter: filterType): [Session]!
 }
 
 type Response {
-  success: Boolean
-  message: String
+  success: Boolean!
+  message: String!
   token: String
 }
 
 type Session {
-  id : String
-  owner: String
+  id : String!
+  owner: String!
   title: String
   description: String
-  start: Int
-  end: Int
-  Ts: Int
+  start: Int!
+  end: Int!
+  Ts: Int!
 }
 
 type User {
-  id : String
+  id : String!
   name : String
-  email: String
-  password: String
-  Ts: Int
+  email: String!
+  Ts: Int!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -499,18 +499,75 @@ func (ec *executionContext) field_Mutation_deleteSession_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["passcode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("passcode"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["passcode"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_saveSession_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *models.SessionInput
+	var arg0 *model.SessionInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSessionInput(ctx, tmp)
+		arg0, err = ec.unmarshalOSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSessionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_signUp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["passcode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("passcode"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["passcode"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg2
 	return args, nil
 }
 
@@ -526,10 +583,10 @@ func (ec *executionContext) field_Mutation_updateSessionInfo_args(ctx context.Co
 		}
 	}
 	args["id"] = arg0
-	var arg1 *models.UpdateSessionInput
+	var arg1 *model.UpdateSessionInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOupdateSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUpdateSessionInput(ctx, tmp)
+		arg1, err = ec.unmarshalOupdateSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUpdateSessionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -571,10 +628,10 @@ func (ec *executionContext) field_Query_session_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_sessions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *models.FilterType
+	var arg0 *model.FilterType
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg0, err = ec.unmarshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐFilterType(ctx, tmp)
+		arg0, err = ec.unmarshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐFilterType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -621,7 +678,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AuthResponse_success(ctx context.Context, field graphql.CollectedField, obj *models.AuthResponse) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -646,14 +703,17 @@ func (ec *executionContext) _AuthResponse_success(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AuthResponse_message(ctx context.Context, field graphql.CollectedField, obj *models.AuthResponse) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -678,14 +738,17 @@ func (ec *executionContext) _AuthResponse_message(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AuthResponse_jwtToken(ctx context.Context, field graphql.CollectedField, obj *models.AuthResponse) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthResponse_jwtToken(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -720,7 +783,7 @@ func (ec *executionContext) _AuthResponse_jwtToken(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AuthResponse_refreshToken(ctx context.Context, field graphql.CollectedField, obj *models.AuthResponse) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthResponse_refreshToken(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -755,7 +818,7 @@ func (ec *executionContext) _AuthResponse_refreshToken(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _AuthResponse_User(ctx context.Context, field graphql.CollectedField, obj *models.AuthResponse) (ret graphql.Marshaler) {
+func (ec *executionContext) _AuthResponse_User(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -785,9 +848,9 @@ func (ec *executionContext) _AuthResponse_User(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -806,9 +869,16 @@ func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_signUp_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SignUp(rctx)
+		return ec.resolvers.Mutation().SignUp(rctx, args["email"].(string), args["passcode"].(string), args["name"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -820,9 +890,9 @@ func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AuthResponse)
+	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -841,9 +911,16 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_login_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Login(rctx)
+		return ec.resolvers.Mutation().Login(rctx, args["email"].(string), args["passcode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -855,9 +932,9 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AuthResponse)
+	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -890,9 +967,9 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.AuthResponse)
+	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_saveSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -920,7 +997,7 @@ func (ec *executionContext) _Mutation_saveSession(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SaveSession(rctx, args["input"].(*models.SessionInput))
+		return ec.resolvers.Mutation().SaveSession(rctx, args["input"].(*model.SessionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -932,9 +1009,9 @@ func (ec *executionContext) _Mutation_saveSession(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Response)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateSessionInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -962,7 +1039,7 @@ func (ec *executionContext) _Mutation_updateSessionInfo(ctx context.Context, fie
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSessionInfo(rctx, args["id"].(string), args["input"].(*models.UpdateSessionInput))
+		return ec.resolvers.Mutation().UpdateSessionInfo(rctx, args["id"].(string), args["input"].(*model.UpdateSessionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -974,9 +1051,9 @@ func (ec *executionContext) _Mutation_updateSessionInfo(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Response)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1016,9 +1093,9 @@ func (ec *executionContext) _Mutation_deleteSession(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Response)
+	res := resTmp.(*model.Response)
 	fc.Result = res
-	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐResponse(ctx, field.Selections, res)
+	return ec.marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1051,9 +1128,9 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_session(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1093,9 +1170,9 @@ func (ec *executionContext) _Query_session(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Session)
+	res := resTmp.(*model.Session)
 	fc.Result = res
-	return ec.marshalNSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx, field.Selections, res)
+	return ec.marshalNSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_sessions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1123,7 +1200,7 @@ func (ec *executionContext) _Query_sessions(ctx context.Context, field graphql.C
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Sessions(rctx, args["filter"].(*models.FilterType))
+		return ec.resolvers.Query().Sessions(rctx, args["filter"].(*model.FilterType))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1135,9 +1212,9 @@ func (ec *executionContext) _Query_sessions(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Session)
+	res := resTmp.([]*model.Session)
 	fc.Result = res
-	return ec.marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx, field.Selections, res)
+	return ec.marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1211,7 +1288,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Response_success(ctx context.Context, field graphql.CollectedField, obj *models.Response) (ret graphql.Marshaler) {
+func (ec *executionContext) _Response_success(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1236,14 +1313,17 @@ func (ec *executionContext) _Response_success(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Response_message(ctx context.Context, field graphql.CollectedField, obj *models.Response) (ret graphql.Marshaler) {
+func (ec *executionContext) _Response_message(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1268,14 +1348,17 @@ func (ec *executionContext) _Response_message(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Response_token(ctx context.Context, field graphql.CollectedField, obj *models.Response) (ret graphql.Marshaler) {
+func (ec *executionContext) _Response_token(ctx context.Context, field graphql.CollectedField, obj *model.Response) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1307,7 +1390,7 @@ func (ec *executionContext) _Response_token(ctx context.Context, field graphql.C
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_id(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_id(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1332,14 +1415,17 @@ func (ec *executionContext) _Session_id(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_owner(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_owner(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1364,14 +1450,17 @@ func (ec *executionContext) _Session_owner(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_title(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_title(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1403,7 +1492,7 @@ func (ec *executionContext) _Session_title(ctx context.Context, field graphql.Co
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_description(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_description(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1435,7 +1524,7 @@ func (ec *executionContext) _Session_description(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_start(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_start(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1460,14 +1549,17 @@ func (ec *executionContext) _Session_start(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_end(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_end(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1492,14 +1584,17 @@ func (ec *executionContext) _Session_end(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Session_Ts(ctx context.Context, field graphql.CollectedField, obj *models.Session) (ret graphql.Marshaler) {
+func (ec *executionContext) _Session_Ts(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1524,14 +1619,17 @@ func (ec *executionContext) _Session_Ts(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1556,14 +1654,17 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_name(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1595,7 +1696,7 @@ func (ec *executionContext) _User_name(ctx context.Context, field graphql.Collec
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1620,46 +1721,17 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_password(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
 		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Password, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
 		return graphql.Null
 	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_Ts(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_Ts(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1684,11 +1756,14 @@ func (ec *executionContext) _User_Ts(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2778,8 +2853,8 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputSessionInput(ctx context.Context, obj interface{}) (models.SessionInput, error) {
-	var it models.SessionInput
+func (ec *executionContext) unmarshalInputSessionInput(ctx context.Context, obj interface{}) (model.SessionInput, error) {
+	var it model.SessionInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -2822,8 +2897,8 @@ func (ec *executionContext) unmarshalInputSessionInput(ctx context.Context, obj 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputupdateSessionInput(ctx context.Context, obj interface{}) (models.UpdateSessionInput, error) {
-	var it models.UpdateSessionInput
+func (ec *executionContext) unmarshalInputupdateSessionInput(ctx context.Context, obj interface{}) (model.UpdateSessionInput, error) {
+	var it model.UpdateSessionInput
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -2860,7 +2935,7 @@ func (ec *executionContext) unmarshalInputupdateSessionInput(ctx context.Context
 
 var authResponseImplementors = []string{"AuthResponse"}
 
-func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.SelectionSet, obj *models.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.SelectionSet, obj *model.AuthResponse) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, authResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2871,8 +2946,14 @@ func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.Selection
 			out.Values[i] = graphql.MarshalString("AuthResponse")
 		case "success":
 			out.Values[i] = ec._AuthResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "message":
 			out.Values[i] = ec._AuthResponse_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "jwtToken":
 			out.Values[i] = ec._AuthResponse_jwtToken(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3029,7 +3110,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var responseImplementors = []string{"Response"}
 
-func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet, obj *models.Response) graphql.Marshaler {
+func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet, obj *model.Response) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, responseImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -3040,8 +3121,14 @@ func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("Response")
 		case "success":
 			out.Values[i] = ec._Response_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "message":
 			out.Values[i] = ec._Response_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "token":
 			out.Values[i] = ec._Response_token(ctx, field, obj)
 		default:
@@ -3057,7 +3144,7 @@ func (ec *executionContext) _Response(ctx context.Context, sel ast.SelectionSet,
 
 var sessionImplementors = []string{"Session"}
 
-func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, obj *models.Session) graphql.Marshaler {
+func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, obj *model.Session) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, sessionImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -3068,18 +3155,33 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Session")
 		case "id":
 			out.Values[i] = ec._Session_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "owner":
 			out.Values[i] = ec._Session_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "title":
 			out.Values[i] = ec._Session_title(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Session_description(ctx, field, obj)
 		case "start":
 			out.Values[i] = ec._Session_start(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "end":
 			out.Values[i] = ec._Session_end(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "Ts":
 			out.Values[i] = ec._Session_Ts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3093,7 +3195,7 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 
 var userImplementors = []string{"User"}
 
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *models.User) graphql.Marshaler {
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -3104,14 +3206,21 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = graphql.MarshalString("User")
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
-		case "password":
-			out.Values[i] = ec._User_password(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "Ts":
 			out.Values[i] = ec._User_Ts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3368,11 +3477,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v models.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
 	return ec._AuthResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *models.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3412,11 +3521,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNResponse2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐResponse(ctx context.Context, sel ast.SelectionSet, v models.Response) graphql.Marshaler {
+func (ec *executionContext) marshalNResponse2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐResponse(ctx context.Context, sel ast.SelectionSet, v model.Response) graphql.Marshaler {
 	return ec._Response(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐResponse(ctx context.Context, sel ast.SelectionSet, v *models.Response) graphql.Marshaler {
+func (ec *executionContext) marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐResponse(ctx context.Context, sel ast.SelectionSet, v *model.Response) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3426,11 +3535,11 @@ func (ec *executionContext) marshalNResponse2ᚖgithubᚗcomᚋvictorᚑnachᚋt
 	return ec._Response(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSession2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx context.Context, sel ast.SelectionSet, v models.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v model.Session) graphql.Marshaler {
 	return ec._Session(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx context.Context, sel ast.SelectionSet, v []*models.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v []*model.Session) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3454,7 +3563,7 @@ func (ec *executionContext) marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnach�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx, sel, v[i])
+			ret[i] = ec.marshalOSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3467,7 +3576,7 @@ func (ec *executionContext) marshalNSession2ᚕᚖgithubᚗcomᚋvictorᚑnach�
 	return ret
 }
 
-func (ec *executionContext) marshalNSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx context.Context, sel ast.SelectionSet, v *models.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3492,11 +3601,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v *models.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3759,29 +3868,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalInt(*v)
-}
-
-func (ec *executionContext) marshalOSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSession(ctx context.Context, sel ast.SelectionSet, v *models.Session) graphql.Marshaler {
+func (ec *executionContext) marshalOSession2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Session(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐSessionInput(ctx context.Context, v interface{}) (*models.SessionInput, error) {
+func (ec *executionContext) unmarshalOSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐSessionInput(ctx context.Context, v interface{}) (*model.SessionInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -3987,23 +4081,23 @@ func (ec *executionContext) marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return ec.___Type(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐFilterType(ctx context.Context, v interface{}) (*models.FilterType, error) {
+func (ec *executionContext) unmarshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐFilterType(ctx context.Context, v interface{}) (*model.FilterType, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(models.FilterType)
+	var res = new(model.FilterType)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐFilterType(ctx context.Context, sel ast.SelectionSet, v *models.FilterType) graphql.Marshaler {
+func (ec *executionContext) marshalOfilterType2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐFilterType(ctx context.Context, sel ast.SelectionSet, v *model.FilterType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return v
 }
 
-func (ec *executionContext) unmarshalOupdateSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelsᚐUpdateSessionInput(ctx context.Context, v interface{}) (*models.UpdateSessionInput, error) {
+func (ec *executionContext) unmarshalOupdateSessionInput2ᚖgithubᚗcomᚋvictorᚑnachᚋtimeᚑtrackerᚋgraphᚋmodelᚐUpdateSessionInput(ctx context.Context, v interface{}) (*model.UpdateSessionInput, error) {
 	if v == nil {
 		return nil, nil
 	}

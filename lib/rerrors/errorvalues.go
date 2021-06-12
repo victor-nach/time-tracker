@@ -6,30 +6,46 @@ import (
 )
 
 const (
-	InvalidRequestErr = 101
-	InternalErr       = 102
-	DatabaseErr       = 103
+	InvalidRequestErr   = 101
+	InternalErr         = 102
+	DatabaseErr         = 103
+	InvalidAuthErr      = 104
+	CustomerNotFoundErr = 105
+	SessionNotFoundErr  = 106
+	EmailExistsError    = 107
 )
 
 var (
 	internalErrMsg = "failed to process the request at this time, please try again later."
 
 	errTypes = map[int]string{
-		InvalidRequestErr: "InvalidRequestErr",
-		InternalErr:       "InternalErr",
-		DatabaseErr:       "DatabaseErr",
+		InvalidRequestErr:   "InvalidRequestErr",
+		InternalErr:         "InternalErr",
+		DatabaseErr:         "DatabaseErr",
+		InvalidAuthErr:      "InvalidAuthErr",
+		CustomerNotFoundErr: "CustomerNotFoundErr",
+		SessionNotFoundErr:  "SessionNotFoundErr",
+		EmailExistsError:    "EmailExistsError",
 	}
 
 	errMessages = map[int]string{
-		InvalidRequestErr: "invalid request error",
-		InternalErr:       internalErrMsg,
-		DatabaseErr:       internalErrMsg,
+		InvalidRequestErr:   "invalid request error",
+		InternalErr:         internalErrMsg,
+		DatabaseErr:         internalErrMsg,
+		InvalidAuthErr:      "email or passcode invalid",
+		CustomerNotFoundErr: "invalid customer id",
+		SessionNotFoundErr:  "invalid session id",
+		EmailExistsError:    "Dear user, this email already exists, please use a different email address",
 	}
 
 	errDetails = map[int]string{
-		InvalidRequestErr: "invalid request parameters",
-		InternalErr:       internalErrMsg,
-		DatabaseErr:       "database error",
+		InvalidRequestErr:   "invalid request parameters",
+		InternalErr:         internalErrMsg,
+		DatabaseErr:         "database error",
+		InvalidAuthErr:      "email or passcode invalid",
+		CustomerNotFoundErr: "invalid customer id",
+		SessionNotFoundErr:  "invalid session id",
+		EmailExistsError:    "Duplicate Email found",
 	}
 )
 

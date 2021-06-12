@@ -1,0 +1,28 @@
+type Query {
+  me: User!
+  session(id: String!): Session!
+  sessions(filter: filterType): [Session]!
+}
+
+type Response {
+  success: Boolean!
+  message: String!
+  token: String
+}
+
+type Session {
+  id : String!
+  owner: String!
+  title: String
+  description: String
+  start: Int!
+  end: Int!
+  Ts: Int!
+}
+
+type User {
+  id : String!
+  name : String
+  email: String!
+  Ts: Int!
+}
