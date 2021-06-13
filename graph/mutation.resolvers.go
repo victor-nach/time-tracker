@@ -16,8 +16,8 @@ import (
 )
 
 func (r *mutationResolver) SignUp(ctx context.Context, email string, passcode string, name string) (*types.AuthResponse, error) {
-	if _, err := r.store.GetUserByEmail(email); err != nil {
-		err := rerrors.Format(rerrors.InvalidAuthErr, err)
+	if _, err := r.store.GetUserByEmail(email); err == nil {
+		err := rerrors.Format(rerrors.EmailExistsError, err)
 		r.logger.Error("sign up", zap.Error(err))
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, email string, passcode st
 		Message:      "Sign up Successful",
 		JwtToken:     authToken,
 		RefreshToken: refreshToken,
-		//User: user,
+		User:         mapUser(&user),
 	}
 
 	return resp, nil
@@ -90,6 +90,8 @@ func (r *mutationResolver) Login(ctx context.Context, email string, passcode str
 func (r *mutationResolver) RefreshToken(ctx context.Context) (*types.AuthResponse, error) {
 	claims, err := r.getClaimsFromCtx(ctx)
 	if err != nil {
+		err = rerrors.Format(rerrors.InvalidAuthErr, err)
+		r.logger.Error("save session", zap.Error(err))
 		return nil, err
 	}
 	tokenExpiry := time.Now().Add(tokenhandler.AuthTokenDuration)

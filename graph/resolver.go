@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"github.com/victor-nach/time-tracker/db"
 	types "github.com/victor-nach/time-tracker/graph/model"
 	"github.com/victor-nach/time-tracker/lib/encryptor"
@@ -9,6 +10,7 @@ import (
 	"github.com/victor-nach/time-tracker/lib/tokenhandler"
 	"github.com/victor-nach/time-tracker/lib/ulid"
 	"github.com/victor-nach/time-tracker/models"
+	"github.com/victor-nach/time-tracker/server/middlewares"
 	"go.uber.org/zap"
 	"time"
 )
@@ -34,7 +36,11 @@ func NewResolver(store db.Datastore, tokenHandler tokenhandler.TokenHandler, log
 }
 
 func (r *Resolver) getClaimsFromCtx(ctx context.Context) (*tokenhandler.Claims, error) {
-	return nil, nil
+	claims, ok := ctx.Value(middlewares.AuthContextKey).(tokenhandler.Claims)
+	if !ok {
+		return nil, errors.New("unable to parse authenticated user")
+	}
+	return &claims, nil
 }
 
 func (r *mutationResolver) genAuthTokens(userId string) (authToken string, refreshToken string, err error) {

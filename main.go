@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/victor-nach/time-tracker/config"
+	"github.com/victor-nach/time-tracker/db/mongo"
 	"github.com/victor-nach/time-tracker/server"
 	"log"
 	"os"
@@ -20,12 +21,12 @@ func main() {
 		log.Fatalf("failed to start logger: %v", err)
 	}
 
-	//mongoStore, _, err := mongo.New(cfg.DBURL, cfg.DBName)
-	//if err != nil {
-	//	log.Fatalf("failed to open mongodb: %v", err)
-	//}
+	mongoStore, _, err := mongo.New(cfg.DBURL, cfg.DBName)
+	if err != nil {
+		log.Fatalf("failed to open mongodb: %v", err)
+	}
 
-	srv := server.NewServer(nil, cfg, logger)
+	srv := server.NewServer(mongoStore, cfg, logger)
 
 	// create channel to listen to shutdown signals
 	shutdownChan := make(chan os.Signal, 1)

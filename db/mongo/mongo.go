@@ -97,7 +97,7 @@ func (m mongoStore) GetSession(id, owner string) (*models.Session, error) {
 
 func (m mongoStore) GetSessions(owner string, filter string) ([]*models.Session, error) {
 	ctx := context.Background()
-	query := bson.M{ "owner": owner }
+	query := bson.M{"owner": owner}
 
 	if filter != "nil" {
 		now := time.Now()
@@ -110,7 +110,7 @@ func (m mongoStore) GetSessions(owner string, filter string) ([]*models.Session,
 			startTime = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local).
 				AddDate(0, 0, -int(now.Weekday()))
 		case "month":
-			startTime = time.Date(now.Year(), now.Month(),0, 0, 0, 0, 0, time.Local)
+			startTime = time.Date(now.Year(), now.Month(), 0, 0, 0, 0, 0, time.Local)
 		}
 
 		query["ts"] = bson.M{"$gt": startTime.Unix()}

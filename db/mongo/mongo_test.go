@@ -259,37 +259,36 @@ func TestMongoStore_GetSessions(t *testing.T) {
 	)
 
 	var tests = []struct {
-		name     string
-		testType int
-		filter string
+		name           string
+		testType       int
+		filter         string
 		expectedLength int
 	}{
 		{
-			name:     "Get all sessions",
-			testType: getAllSessions,
-			filter: "",
+			name:           "Get all sessions",
+			testType:       getAllSessions,
+			filter:         "",
 			expectedLength: 2,
 		},
 		{
-			name:     "Get sessions by day",
-			testType: getSessionsByDay,
-			filter: "day",
+			name:           "Get sessions by day",
+			testType:       getSessionsByDay,
+			filter:         "day",
 			expectedLength: 1,
 		},
 		{
-			name:     "Get sessions by week",
-			testType: getSessionsByWeek,
-			filter: "week",
+			name:           "Get sessions by week",
+			testType:       getSessionsByWeek,
+			filter:         "week",
 			expectedLength: 1,
 		},
 		{
-			name:     "Get sessions by month",
-			testType: getSessionsByMonth,
-			filter: "month",
+			name:           "Get sessions by month",
+			testType:       getSessionsByMonth,
+			filter:         "month",
 			expectedLength: 2,
 		},
 	}
-
 
 	connectUri := "mongodb://localhost:" + mongoDbPort
 	dataStore, client, err := New(connectUri, "tracker")
@@ -306,7 +305,7 @@ func TestMongoStore_GetSessions(t *testing.T) {
 	mockSession.Owner = mockUser.ID
 
 	mockSession2 := mockSession
-	mockSession2.Ts = time.Now().AddDate(0,0,-10).Unix() // 10 days ago
+	mockSession2.Ts = time.Now().AddDate(0, 0, -10).Unix() // 10 days ago
 
 	_, err = client.Database(dbName).Collection(usersCollection).InsertOne(context.Background(), mockUser)
 	assert.Nil(t, err)
@@ -353,7 +352,7 @@ func TestMongoStore_ManageSession(t *testing.T) {
 	s, err := dataStore.GetSession(mockSession.ID, mockSession.Owner)
 	assert.NotNil(t, s)
 	assert.NoError(t, err)
-	assert.Equal(t, title ,s.Title)
+	assert.Equal(t, title, s.Title)
 
 	//	 test delete session
 	err = dataStore.DeleteSession(mockSession.ID)

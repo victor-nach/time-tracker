@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"strings"
 )
 
 //Server ...
@@ -65,18 +66,24 @@ func (s *Server) Run(address string) error {
 
 //gqlErrorParser parses internal error type to graphql error type
 func gqlErrorParser(ctx context.Context, e error) *gqlerror.Error {
-	gqlError := graphql.DefaultErrorPresenter(ctx, e)
+	err := graphql.DefaultErrorPresenter(ctx, e)
 
-	errString := gqlError.Error()
-	gqlError.Message = errString
+	errString := err.Error()
+	err.Message = errString
 
-	r, err := rerrors.NewErrFromJSON(errString)
-	if err == nil {
-		gqlError.Message = r.Message
-		gqlError.Extensions = map[string]interface{}{
+	index := strings.Index(errString, "{")
+	if index != -1 {
+		errString = strings.TrimSpace(errString[index:])
+	}
+	r, er := rerrors.NewErrFromJSON(errString)
+
+	err.Message = err.Error()
+	if er == nil {
+		err.Message = r.Message
+		err.Extensions = map[string]interface{}{
 			"code":      r.Code,
 			"errorType": r.ErrorType,
 		}
 	}
-	return gqlError
+	return err
 }

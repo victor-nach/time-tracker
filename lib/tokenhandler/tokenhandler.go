@@ -18,7 +18,7 @@ var (
 )
 
 type Claims struct {
-	UserId       string `json:"user_id"`
+	UserId string `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -36,16 +36,16 @@ var _ TokenHandler = &tokenHandler{}
 
 func New(secret string) TokenHandler {
 	return &tokenHandler{
-	jwtSecret: secret,
+		jwtSecret: secret,
 	}
 }
 
 //NewToken ...
 func (t *tokenHandler) NewToken(userId string, expirationTime time.Time) (string, error) {
 	claims := &Claims{
-		UserId:   userId,
+		UserId: userId,
 		StandardClaims: jwt.StandardClaims{
-			IssuedAt: time.Now().Unix(),
+			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
@@ -73,6 +73,6 @@ func (t *tokenHandler) ValidateToken(tokenString string) (*Claims, error) {
 		return nil, ErrInvalidToken
 	}
 	return &Claims{
-		UserId:   claims.UserId,
+		UserId: claims.UserId,
 	}, nil
 }

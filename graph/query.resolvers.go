@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/victor-nach/time-tracker/lib/rerrors"
 	"go.uber.org/zap"
 
@@ -15,6 +16,8 @@ import (
 func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
 	claims, err := r.getClaimsFromCtx(ctx)
 	if err != nil {
+		err = rerrors.Format(rerrors.InvalidAuthErr, err)
+		r.logger.Error("save session", zap.Error(err))
 		return nil, err
 	}
 
@@ -24,7 +27,7 @@ func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
 		r.logger.Error("sign up", zap.Error(err))
 		return nil, err
 	}
-	
+
 	resp := mapUser(user)
 
 	return resp, nil
@@ -49,12 +52,17 @@ func (r *queryResolver) Session(ctx context.Context, id string) (*types.Session,
 }
 
 func (r *queryResolver) Sessions(ctx context.Context, filter *types.FilterType) ([]*types.Session, error) {
+	fmt.Println("sessions query ...")
 	claims, err := r.getClaimsFromCtx(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	sessions, err := r.store.GetSessions(claims.UserId, filter.String())
+	fil := ""
+	if filter != nil {
+		fil = filter.String()
+	}
+	sessions, err := r.store.GetSessions(claims.UserId, fil)
 	if err != nil {
 		err = rerrors.Format(rerrors.DatabaseErr, err)
 		r.logger.Error("delete session", zap.Error(err))

@@ -24,20 +24,20 @@ func TestConfig_LoadSecrets(t *testing.T) {
 			name:     "Test default variables",
 			scenario: defaultEnv,
 			expected: Secrets{
-				Port:        defaultPort,
+				Port:      defaultPort,
 				JWTSecret: defaultSecret,
-				DBName: defaultDbName,
-				DBURL: defaultDbUrl,
+				DBName:    defaultDbName,
+				DBURL:     defaultDbUrl,
 			},
 		},
 		{
 			name:     "Test .env file",
 			scenario: envFile,
 			expected: Secrets{
-				Port:        "1234",
+				Port:      "1234",
 				JWTSecret: "secret",
-				DBName: "track",
-				DBURL: "someUrl",
+				DBName:    "track",
+				DBURL:     "someUrl",
 			},
 		},
 	}

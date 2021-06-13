@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"fmt"
 	"github.com/victor-nach/time-tracker/lib/tokenhandler"
 	"net/http"
 	"strings"
@@ -13,17 +14,17 @@ type ctxKey struct {
 	Name string
 }
 
-var AuthContextKey =  &ctxKey{Name: "AuthKey "}
+var AuthContextKey = &ctxKey{Name: "AuthKey "}
 
 type AuthMiddleware struct {
 	tokenHandler tokenhandler.TokenHandler
-	logger      *zap.Logger
+	logger       *zap.Logger
 }
 
-func NewAuthMiddleware(tokenHandler tokenhandler.TokenHandler,  logger *zap.Logger) *AuthMiddleware {
+func NewAuthMiddleware(tokenHandler tokenhandler.TokenHandler, logger *zap.Logger) *AuthMiddleware {
 	return &AuthMiddleware{
 		tokenHandler: tokenHandler,
-		logger: logger,
+		logger:       logger,
 	}
 }
 
@@ -34,6 +35,8 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		fmt.Println("authorization", authorization)
 
 		jwtToken := ""
 		sp := strings.Split(authorization, " ")
@@ -46,6 +49,8 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		fmt.Println("token", jwtToken)
+
 		claims, err := A.tokenHandler.ValidateToken(jwtToken)
 		if err != nil {
 			A.logger.Error("failed to validate token", zap.Error(err))
@@ -53,8 +58,9 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		fmt.Println("claims", claims)
 		ctx := context.WithValue(r.Context(), AuthContextKey, tokenhandler.Claims{
-			UserId:   claims.UserId,
+			UserId: claims.UserId,
 		})
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
