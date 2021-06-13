@@ -25,7 +25,9 @@ func TestConfig_LoadSecrets(t *testing.T) {
 			scenario: defaultEnv,
 			expected: Secrets{
 				Port:        defaultPort,
-				CoindeskURL: defaultUrl,
+				JWTSecret: defaultSecret,
+				DBName: defaultDbName,
+				DBURL: defaultDbUrl,
 			},
 		},
 		{
@@ -33,7 +35,9 @@ func TestConfig_LoadSecrets(t *testing.T) {
 			scenario: envFile,
 			expected: Secrets{
 				Port:        "1234",
-				CoindeskURL: "url",
+				JWTSecret: "secret",
+				DBName: "track",
+				DBURL: "someUrl",
 			},
 		},
 	}
@@ -54,9 +58,11 @@ func TestConfig_LoadSecrets(t *testing.T) {
 
 				// add sample env data to temp file
 				_, err = file.Write([]byte(fmt.Sprintf(
-					"PORT=%v\nCOINDESK_URL=%v",
+					"PORT=%v\nDATABASE_URL=%v\nDATABASE_NAME=%v\nJWT_SECRET=%v",
 					testCase.expected.Port,
-					testCase.expected.CoindeskURL,
+					testCase.expected.DBURL,
+					testCase.expected.DBName,
+					testCase.expected.JWTSecret,
 				)))
 				assert.NoError(t, err)
 
@@ -72,4 +78,8 @@ func TestConfig_LoadSecrets(t *testing.T) {
 			assert.Equal(t, testCase.expected, *s)
 		})
 	}
+}
+
+func TestNew(t *testing.T) {
+	fmt.Println("testing new")
 }

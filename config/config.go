@@ -7,17 +7,17 @@ import (
 
 const (
 	defaultPort   = "8080"
-	defaultSecret    = "secret"
+	defaultSecret = "secret"
 	defaultDbUrl  = "mongodb://localhost:27017"
 	defaultDbName = "tracker"
 )
 
 // Secrets contain all the config that this application needs
 type Secrets struct {
-	Port        string `json:"port"`
-	JWTSecret   string `json:"jwt_secret"`
-	DBName      string `json:"db_name"`
-	DBURL       string `json:"dburl"`
+	Port      string `json:"port"`
+	JWTSecret string `json:"jwt_secret"`
+	DBName    string `json:"db_name"`
+	DBURL     string `json:"dburl"`
 }
 
 // LoadSecrets loads secrets from the environment and returns it
