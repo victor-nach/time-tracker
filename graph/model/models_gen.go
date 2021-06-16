@@ -29,6 +29,7 @@ type Session struct {
 	Description *string `json:"description"`
 	Start       int     `json:"start"`
 	End         int     `json:"end"`
+	Duration    int     `json:"duration"`
 	Ts          int     `json:"Ts"`
 }
 
@@ -37,6 +38,7 @@ type SessionInput struct {
 	Description *string `json:"description"`
 	Start       int     `json:"start"`
 	End         int     `json:"end"`
+	Duration    int     `json:"duration"`
 }
 
 type User struct {

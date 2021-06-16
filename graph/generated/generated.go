@@ -74,6 +74,7 @@ type ComplexityRoot struct {
 
 	Session struct {
 		Description func(childComplexity int) int
+		Duration    func(childComplexity int) int
 		End         func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Owner       func(childComplexity int) int
@@ -280,6 +281,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Session.Description(childComplexity), true
 
+	case "Session.duration":
+		if e.complexity.Session.Duration == nil {
+			break
+		}
+
+		return e.complexity.Session.Duration(childComplexity), true
+
 	case "Session.end":
 		if e.complexity.Session.End == nil {
 			break
@@ -435,6 +443,7 @@ input SessionInput {
   description: String
   start: Int!
   end: Int!
+  duration: Int!
 }
 
 input updateSessionInput {
@@ -468,6 +477,7 @@ type Session {
   description: String
   start: Int!
   end: Int!
+  duration: Int!
   Ts: Int!
 }
 
@@ -1578,6 +1588,41 @@ func (ec *executionContext) _Session_end(ctx context.Context, field graphql.Coll
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.End, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Session_duration(ctx context.Context, field graphql.CollectedField, obj *model.Session) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Session",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Duration, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2891,6 +2936,14 @@ func (ec *executionContext) unmarshalInputSessionInput(ctx context.Context, obj 
 			if err != nil {
 				return it, err
 			}
+		case "duration":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("duration"))
+			it.Duration, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3174,6 +3227,11 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "end":
 			out.Values[i] = ec._Session_end(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "duration":
+			out.Values[i] = ec._Session_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

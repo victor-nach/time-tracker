@@ -17,6 +17,7 @@ type Session {
   description: String
   start: Int!
   end: Int!
+  duration: Int!
   Ts: Int!
 }
 

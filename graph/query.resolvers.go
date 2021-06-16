@@ -6,11 +6,11 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/victor-nach/time-tracker/lib/rerrors"
-	"go.uber.org/zap"
 
 	"github.com/victor-nach/time-tracker/graph/generated"
 	types "github.com/victor-nach/time-tracker/graph/model"
+	"github.com/victor-nach/time-tracker/lib/rerrors"
+	"go.uber.org/zap"
 )
 
 func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
@@ -23,7 +23,7 @@ func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
 
 	user, err := r.store.GetUser(claims.UserId)
 	if err != nil {
-		err := rerrors.Format(rerrors.InvalidAuthErr, err)
+		err := rerrors.Format(rerrors.CustomerNotFoundErr, err)
 		r.logger.Error("sign up", zap.Error(err))
 		return nil, err
 	}
@@ -36,6 +36,8 @@ func (r *queryResolver) Me(ctx context.Context) (*types.User, error) {
 func (r *queryResolver) Session(ctx context.Context, id string) (*types.Session, error) {
 	claims, err := r.getClaimsFromCtx(ctx)
 	if err != nil {
+		err = rerrors.Format(rerrors.InvalidAuthErr, err)
+		r.logger.Error("save session", zap.Error(err))
 		return nil, err
 	}
 

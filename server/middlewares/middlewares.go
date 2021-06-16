@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"context"
-	"fmt"
 	"github.com/victor-nach/time-tracker/lib/tokenhandler"
 	"net/http"
 	"strings"
@@ -36,8 +35,6 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("authorization", authorization)
-
 		jwtToken := ""
 		sp := strings.Split(authorization, " ")
 		if len(sp) > 1 {
@@ -49,8 +46,6 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("token", jwtToken)
-
 		claims, err := A.tokenHandler.ValidateToken(jwtToken)
 		if err != nil {
 			A.logger.Error("failed to validate token", zap.Error(err))
@@ -58,7 +53,6 @@ func (A AuthMiddleware) HandleAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("claims", claims)
 		ctx := context.WithValue(r.Context(), AuthContextKey, tokenhandler.Claims{
 			UserId: claims.UserId,
 		})

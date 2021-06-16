@@ -45,13 +45,13 @@ func NewServer(dataStore db.Datastore, cfg *config.Secrets, logger *zap.Logger) 
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 		Debug:            true,
 	}).Handler)
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
 
 	return &Server{server: srv, router: router}
 }

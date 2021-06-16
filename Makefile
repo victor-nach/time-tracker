@@ -10,6 +10,8 @@ test:
 
 gen-mocks:
 	mockery --name=Idgenerator --recursive
+	mockery --name=TokenHandler --recursive
+	mockery --name=Encryptor --recursive
 	mockery --name=Datastore --recursive
 	go generate ./...
 

@@ -121,17 +121,18 @@ func (r *mutationResolver) SaveSession(ctx context.Context, input *types.Session
 
 	sessionId := r.idGen.Generate()
 	session := models.Session{
-		ID:    sessionId,
-		Owner: claims.UserId,
-		Start: int64(input.Start),
-		End:   int64(input.End),
-		Ts:    time.Now().Unix(),
+		ID:       sessionId,
+		Owner:    claims.UserId,
+		Start:    int64(input.Start),
+		End:      int64(input.End),
+		Duration: int64(input.End),
+		Ts:       time.Now().Unix(),
 	}
 	if input.Title != nil {
 		session.Title = *input.Title
 	}
 	if input.Description != nil {
-		session.Title = *input.Description
+		session.Description = *input.Description
 	}
 
 	if _, err := r.store.CreateSession(&session); err != nil {

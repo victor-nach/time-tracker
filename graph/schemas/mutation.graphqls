@@ -19,6 +19,7 @@ input SessionInput {
   description: String
   start: Int!
   end: Int!
+  duration: Int!
 }
 
 input updateSessionInput {
