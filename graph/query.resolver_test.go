@@ -158,7 +158,7 @@ func TestQueryResolver_Session(t *testing.T) {
 				authMw := middlewares.NewAuthMiddleware(tokenHandlerMock, zaptest.NewLogger(t))
 				gqlClient := client.New(authMw.HandleAuth(srv))
 
-				query := `query { session { id owner title description start end duration Ts} }`
+				query := `query { session(id: "id") { id owner title description start end duration Ts} }`
 				var resp struct {
 					Session types.Session
 				}
@@ -167,8 +167,8 @@ func TestQueryResolver_Session(t *testing.T) {
 				})
 				assert.Equal(t, resp.Session.ID, mockData.Session.ID)
 				assert.Equal(t, *resp.Session.Title, mockData.Session.Title)
-				assert.Equal(t, resp.Session.Duration, mockData.Session.Duration)
-				assert.Equal(t, resp.Session.End, mockData.Session.End)
+				assert.Equal(t, resp.Session.Duration, int(mockData.Session.Duration))
+				assert.Equal(t, resp.Session.End, int(mockData.Session.End))
 
 			case invalidAuthError:
 				me, err := resolvers.Query().Me(context.Background())

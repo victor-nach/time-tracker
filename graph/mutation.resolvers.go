@@ -125,7 +125,7 @@ func (r *mutationResolver) SaveSession(ctx context.Context, input *types.Session
 		Owner:    claims.UserId,
 		Start:    int64(input.Start),
 		End:      int64(input.End),
-		Duration: int64(input.End),
+		Duration: int64(input.Duration),
 		Ts:       time.Now().Unix(),
 	}
 	if input.Title != nil {

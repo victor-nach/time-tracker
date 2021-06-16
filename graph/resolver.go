@@ -68,6 +68,7 @@ func mapSession(data *models.Session) *types.Session {
 		Owner:       data.Owner,
 		Title:       &data.Title,
 		Description: &data.Description,
+		Duration:    int(data.Duration),
 		Start:       int(data.Start),
 		End:         int(data.End),
 		Ts:          int(data.Ts),

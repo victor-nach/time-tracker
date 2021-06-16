@@ -31,8 +31,6 @@ $ make local
 $ make test 
 ```
 
-```
-
 ```shell script
 # build a binary for the api
 
@@ -60,5 +58,10 @@ $ make fmt
 ### Errors
 | Code | ErrorType | Detail |
 | ----------- | ----------- | ----------- |
-| 101 | InvalidRequestErr | invalid request parameters|
-| 102 | InternalErr | Internal Error, you can try again at another time|
+| 101 | InvalidRequestErr | invalid request parameters |
+| 102 | InternalErr | Internal error|
+| 103 | DatabaseErr | database error |
+| 104 | InvalidAuthErr | email or passcode invalid |
+| 105 | CustomerNotFoundErr | invalid customer id |
+| 106 | SessionNotFoundErr | invalid session id |
+| 107 | EmailExistsError | Duplicate Email found |

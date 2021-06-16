@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	AuthTokenDuration    = 15 * time.Minute
+	AuthTokenDuration    = 15 * time.Hour
 	RefreshTokenDuration = 48 * time.Hour
 )
 
