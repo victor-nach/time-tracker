@@ -10,8 +10,8 @@ User stories:
 - As a user, I want an overview of my sessions for the day, week and month
 - As a user, I want to be able to close my browser and shut down my computer and still have my sessions visible to me when I power it up again.
 
-## How to start 
 
+## How to start 
 
 ```shell script
 # To generate graphql schemas
@@ -55,7 +55,34 @@ $ make vet
 $ make fmt 
 ```
 
-### Errors
+## Deployments
+
+- Backend deployed version - https://trackerr-app.herokuapp.com/
+- frontend deployed version -  https://victor-nach.github.io/time-tracker-frontend/
+- frontend repo - https://github.com/victor-nach/time-tracker-frontend
+
+
+<img width="1600" alt="Screenshot 2021-06-16 at 03 44 11" src="https://user-images.githubusercontent.com/46886694/122150439-a6264500-ce55-11eb-85ba-1cc6f56c55c2.png">
+<img width="1535" alt="Screenshot 2021-06-16 at 03 24 34" src="https://user-images.githubusercontent.com/46886694/122150817-585e0c80-ce56-11eb-8cc4-8619e59f4a15.png">
+
+
+## Features
+- Signup
+- Login
+- Refresh tokek
+- Get user info
+- save session
+- view saved sessions
+- update session
+- delete session
+
+# Tools
+- Go
+- GraphQL
+- MongoDB (datastore)
+- Heroku (deployment)
+
+### Internal Error definition
 | Code | ErrorType | Detail |
 | ----------- | ----------- | ----------- |
 | 101 | InvalidRequestErr | invalid request parameters |
@@ -65,3 +92,4 @@ $ make fmt
 | 105 | CustomerNotFoundErr | invalid customer id |
 | 106 | SessionNotFoundErr | invalid session id |
 | 107 | EmailExistsError | Duplicate Email found |
+
